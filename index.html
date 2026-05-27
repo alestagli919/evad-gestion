@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVAD - Gestión Técnica Avanzada</title>
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAMAAABF0y+mAAAAwFBMVEVHcEwAU4YAbaAAVogAg7wAcKgAS3oMoN0AbqQAqOsAldELn9sLp+AAUHwAUoRLxPIAoeAAPmf///8AEi0AGzgAFzMADioAABEAACECQ2EAIz4AJ0QDL0oAASoAAAIAM1Hy9PXY295DT1/IzNDj6OtseIUNP1pWXmu0u8GXnKN/h5EPTmsADjb8/f0Axvq6xMswV3J3kaWmrbQ5bIsAv/MKp9q94PGct8YJYoyMoK0rOEsAhq9AY3pOm75/w+NXt+BlZRW8AAAAEnRSTlMAxpe0TH7WN2UkbFfoduSHz8qMqCrVAAAB6UlEQVQokW2S53LjMAyEbcdFjpMrICkWiRKpXt0d1+Te/60OsjNnXyb7R5r5BGEBbK9312T2/Dyb9r7RsL85vqE+Nk+TL2gyXhlI4qKIDZiPX/+VjzamPcowk1JmlwLM0rmzwQrKRspaLi1XcvaQjr6V7eCnHtZlvHYdo8wKCH9rJ1sIBcuSkQAuWaUkGANy1vfH6bUfohqEgDT+IwQl9tkfJ1hZTjzfT0KkCV1CWEuSdIu4n6SeUST/m+14KNATyElGD7J4QHCCnxPK8pAKITwCIgjBGdQo12VjZURHkK3RRar/ELgZBoSKc9Z1/4iimvsfjHMKQtJAFlhHFzHPZGi3XoE0VTgKNHVYOuKo2WeLJ3bpAqjavV9HBm3EIr0FPQQWe/CH3V9cop3W4Vxd5rjtDshzhmopXyAWJBzvPtmXauTy5x4X3ajaJxKoDMl/Ptdi4ZAbBcpHC4LqHENygF381RO6HRUxrYuFvC7E8rojx3Ga3xnLJWTOR5FMHlGoiXpAg0uifIGbsuQAcmHt9OtoOUu4Qp2gkZWo1b+RmVn+9QBfTORBDDPSiDDcRUkCtyRRCZdjl4CNjuDYqIowKeWljIh4Bh35fLAiCx1uDNluOvyR7+plFVllUU9offhX7ivL46j3H/C/e+Qs9zqPiVAAAAAElFTkSuQmCC">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- ✅ Firebase SDK - SOLO UNA VEZ, en el HEAD -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #0a1128;
+            --cyan-accent: #00d2ff;
+            --text-dark: #1e293b;
+            --text-light: #f8fafc;
+            --text-gray: #64748b;
+            --glass-bg: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --status-bien: #10b981;
+            --status-vacio: #94a3b8;
+            --status-revision: #f59e0b;
+            --status-mal: #ef4444;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #070d1f 0%, #0f1936 50%, #172a5a 100%);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        header {
+            background: #0b1530;
+            color: #fff;
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 2px solid rgba(0, 210, 255, 0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+        header h1 { font-size: 2rem; font-weight: 700; letter-spacing: 1px; color: #ffffff; }
+        header h1 span { color: var(--cyan-accent); font-weight: 400; margin-left: 5px; }
+        header p { font-size: 0.85rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-top: 4px; }
+
+        /* Indicador de estado Firebase */
+        #firebase-status {
+            display: inline-block;
+            font-size: 0.75rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-top: 8px;
+            font-weight: 600;
+        }
+        #firebase-status.conectado { background: rgba(16,185,129,0.2); color: #10b981; }
+        #firebase-status.error { background: rgba(239,68,68,0.2); color: #ef4444; }
+        #firebase-status.cargando { background: rgba(148,163,184,0.2); color: #94a3b8; }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            color: #fff;
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .aula-card-dashboard {
+            background: var(--glass-bg);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .aula-card-dashboard:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 25px rgba(0, 210, 255, 0.2);
+            border-color: var(--cyan-accent);
+        }
+
+        .aula-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .aula-card-header h3 { font-size: 1.15rem; color: #0b1530; font-weight: 700; }
+
+        .aula-health-badge {
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+        }
+        .health-excelente { background: #d1fae5; color: #065f46; }
+        .health-advertencia { background: #fef3c7; color: #92400e; }
+        .health-critica { background: #fee2e2; color: #991b1b; }
+
+        .health-bar-container {
+            background: #e2e8f0;
+            height: 6px;
+            border-radius: 3px;
+            width: 100%;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .health-bar-fill { height: 100%; transition: width 0.4s ease; }
+
+        .aula-card-stats {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.03);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #475569;
+        }
+        .stat-item span { display: block; text-align: center; font-size: 0.9rem; font-weight: 700; }
+
+        .classroom-workspace-card {
+            background: var(--glass-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.2);
+            border: 1px solid var(--glass-border);
+            margin-bottom: 35px;
+        }
+        .workspace-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(0,0,0,0.05);
+        }
+        .workspace-header h2 { font-size: 1.4rem; font-weight: 700; color: #0b1530; }
+        .workspace-header h2 span { color: #0052d4; background: rgba(0,82,212,0.08); padding: 2px 10px; border-radius: 6px; }
+
+        .btn-reset {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--status-mal); padding: 8px 16px; border-radius: 6px;
+            cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;
+        }
+        .btn-reset:hover { background: var(--status-mal); color: #fff; }
+
+        .profe-mesa-block {
+            background: linear-gradient(to right, #f1f5f9, #e2e8f0);
+            border-left: 5px solid #0052d4;
+            border-radius: 10px; padding: 15px; margin-bottom: 25px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .profe-mesa-label {
+            font-size: 0.75rem; font-weight: 700; color: #0052d4;
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 10px;
+        }
+
+        .student-filas-wrapper {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;
+        }
+        .fila-student-block {
+            background: rgba(255,255,255,0.6);
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 12px; padding: 15px;
+        }
+
+        .fila-student-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 5px;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+        }
+        .fila-student-label { font-size: 0.8rem; font-weight: 700; color: #475569; }
+
+        .btn-add-pc-inline {
+            background: rgba(0, 82, 212, 0.08);
+            border: 1px solid rgba(0, 82, 212, 0.15);
+            color: #0052d4;
+            padding: 4px 10px; font-size: 0.7rem; font-weight: 600;
+            border-radius: 5px; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-add-pc-inline:hover { background: #0052d4; color: #fff; }
+
+        .pcs-flex-layout { display: flex; flex-wrap: wrap; gap: 10px; }
+
+        .pc-node-box {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px; padding: 10px; width: 85px;
+            text-align: center; cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .pc-node-box:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+        .pc-node-box .pc-name-id { font-size: 0.75rem; font-weight: 700; color: var(--text-dark); display: block; }
+        .pc-node-box .pc-monitor-icon { font-size: 1.3rem; margin: 4px 0; display: block; }
+        .pc-node-box .pc-state-pill { font-size: 0.6rem; text-transform: uppercase; font-weight: 700; }
+
+        .node-border-bien { border-bottom: 4px solid var(--status-bien); }
+        .node-border-bien .pc-state-pill { color: var(--status-bien); }
+        .node-border-vacio { border-bottom: 4px solid var(--status-vacio); opacity: 0.5; }
+        .node-border-vacio .pc-state-pill { color: var(--text-gray); }
+        .node-border-revision { border-bottom: 4px solid var(--status-revision); }
+        .node-border-revision .pc-state-pill { color: var(--status-revision); }
+        .node-border-mal { border-bottom: 4px solid var(--status-mal); }
+        .node-border-mal .pc-state-pill { color: var(--status-mal); }
+
+        .node-critico-alarm {
+            position: absolute; top: -5px; right: -5px;
+            font-size: 0.65rem; background: var(--status-mal); color: #fff; font-weight: bold;
+            width: 16px; height: 16px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .incidencias-globales-card {
+            background: var(--glass-bg);
+            border-radius: 14px; padding: 20px; margin-bottom: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .incidencias-globales-card h3 { font-size: 1.1rem; font-weight: 700; color: #b91c1c; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .scroller-div { overflow-x: auto; }
+        .incidencias-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .incidencias-table th, .incidencias-table td { padding: 12px; text-align: left; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .incidencias-table th { background: rgba(0,0,0,0.02); color: var(--text-gray); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; }
+
+        .pill-grav { padding: 3px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
+        .grav-pill-Alta { background-color: #fee2e2; color: #991b1b; }
+        .grav-pill-Media { background-color: #fef3c7; color: #92400e; }
+        .grav-pill-Baja { background-color: #d1fae5; color: #065f46; }
+
+        .btn-technical-resolve {
+            background: var(--status-bien); color: #fff; border: none;
+            padding: 6px 12px; border-radius: 5px; cursor: pointer;
+            font-weight: 600; font-size: 0.75rem;
+        }
+
+        .modal-background {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 17, 40, 0.7); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 999;
+        }
+        .modal-background.active { opacity: 1; pointer-events: auto; }
+        .modal-sheet {
+            background: #fff; border-radius: 16px; width: 100%; max-width: 420px; padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); transform: translateY(15px); transition: all 0.25s;
+        }
+        .modal-background.active .modal-sheet { transform: translateY(0); }
+        .modal-sheet h4 { font-size: 1.2rem; font-weight: 700; color: #0b1530; margin-bottom: 20px; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+
+        .field-group { margin-bottom: 15px; }
+        .field-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px; }
+        .field-group select, .field-group textarea {
+            width: 100%; background: #f8fafc; border: 1px solid #cbd5e1;
+            padding: 10px; border-radius: 6px; font-family: inherit; font-size: 0.85rem;
+        }
+
+        .modal-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 25px; }
+        .btn-ctrl { padding: 10px 14px; border-radius: 6px; cursor: pointer; border: none; font-weight: 600; font-size: 0.8rem; }
+        .btn-ctrl-save { background: #0052d4; color: #fff; flex-grow: 1; }
+        .btn-ctrl-cancel { background: #e2e8f0; color: #475569; }
+        .btn-ctrl-remove { background: #fee2e2; color: #ef4444; }
+
+        footer { text-align: center; padding: 30px 15px; color: rgba(255,255,255,0.4); font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>EVAD <span>| GESTIÓN TÉCNICA</span></h1>
+        <p>Infraestructura e Incidencias en Tiempo Real</p>
+        <div id="firebase-status" class="cargando">⏳ Conectando con Firebase...</div>
+        <button onclick="forzarSubidaFirebase()" style="margin-top:10px;background:rgba(0,210,255,0.15);border:1px solid rgba(0,210,255,0.4);color:#00d2ff;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:0.75rem;font-weight:600;">🔄 Forzar actualización en Firebase</button>
+    </header>
+
+    <div class="container">
+
+        <div class="section-title">📊 Panel de Control: Salud de Aulas</div>
+        <div class="dashboard-grid" id="dashboardAulas"></div>
+
+        <div class="section-title">🖥️ Distribución del Aula Seleccionada</div>
+        <div class="classroom-workspace-card">
+            <div class="workspace-header">
+                <h2 id="tituloAulaActual">Mapeo Técnico: <span>AULA</span></h2>
+                <button class="btn-reset" onclick="confirmarRestablecimiento()">Restablecer Todo</button>
+            </div>
+
+            <div class="profe-mesa-block" id="mesaProfeTarget" style="display:none;">
+                <div class="profe-mesa-label">Mesa de Control / Profesor</div>
+                <div class="pcs-flex-layout" id="gridMesaProfe"></div>
+            </div>
+
+            <div class="student-filas-wrapper" id="gridFilasEstudiantes"></div>
+        </div>
+
+        <div class="incidencias-globales-card">
+            <h3>⚠️ Registro Central de Soporte Técnico</h3>
+            <div class="scroller-div">
+                <table class="incidencias-table">
+                    <thead>
+                        <tr>
+                            <th>Ubicación</th>
+                            <th>ID Equipo</th>
+                            <th>Criticidad</th>
+                            <th>Detalles / Diagnóstico</th>
+                            <th>Acción Rápida</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpoTablaTécnica"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            EVAD Escuela Superior de Videojuegos y Arte Digital © 2026
+        </footer>
+    </div>
+
+    <div class="modal-background" id="modaltécnico">
+        <div class="modal-sheet">
+            <h4 id="técnicoModalTitle">Configurar Equipo</h4>
+
+            <div class="field-group">
+                <label>Estado del Hardware</label>
+                <select id="técnicoSelectEstado">
+                    <option value="bien">🟢 Operativo (Bien)</option>
+                    <option value="vacio">⚪ Puesto Vacío</option>
+                    <option value="revision">🟡 En Revisión Técnica</option>
+                    <option value="mal">🔴 Averiado / Crítico</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label>Nivel de Alerta</label>
+                <select id="técnicoSelectGravedad">
+                    <option value="Ninguna">Ninguna (Todo en orden)</option>
+                    <option value="Baja">Baja (Incidencia menor)</option>
+                    <option value="Media">Media (Rendimiento / Periféricos)</option>
+                    <option value="Alta">Alta (Inoperativo / Crítico)</option>
+                </select>
+            </div>
+
+            <div class="field-group">
+                <label>Notas de la Incidencia</label>
+                <textarea id="técnicoTxtNota" rows="3" placeholder="Falta ratón, fallo de gráfica, BSOD..."></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-ctrl btn-ctrl-remove" id="btnTécnicoEliminar">Eliminar PC</button>
+                <button class="btn-ctrl btn-ctrl-cancel" onclick="cerrarModalTécnico()">Cancelar</button>
+                <button class="btn-ctrl btn-ctrl-save" id="btnTécnicoGuardar">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ TODO EL JAVASCRIPT EN UN SOLO BLOQUE, DENTRO DEL BODY, ANTES DE </body> -->
+    <script>
+        const EMAIL_IRENE_SOPORTE = "antonio.rojano@evadformacion.com";
+
+        // ============================================================
+        // 🔥 CONFIGURACIÓN FIREBASE (una sola vez)
+        // ============================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAx2JsA490IZsfo8IvYevvOJzS5pjh6rEA",
+            authDomain: "evad-gestion.firebaseapp.com",
+            databaseURL: "https://evad-gestion-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "evad-gestion",
+            storageBucket: "evad-gestion.firebasestorage.app",
+            messagingSenderId: "1037713140905",
+            appId: "1:1037713140905:web:06ffc43c5158c6aa618db8"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+        const dbRef = database.ref("evad_aulas_cloud");
+        const statusEl = document.getElementById("firebase-status");
+
+        // ============================================================
+        // 📦 ESTRUCTURA ORIGINAL (por si Firebase está vacío)
+        // ============================================================
+        const ESTRUCTURA_ORIGINAL = {
+            // IMG1: Fila1=PC-01..10 (PC-02 vacio), Fila2=PC-11..20. PC-PROFE separado
+            "ESPORTS": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"vacio"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"bien"},{id:"PC-05",est:"bien"},{id:"PC-06",est:"bien"},
+                        {id:"PC-07",est:"bien"},{id:"PC-08",est:"bien"},{id:"PC-09",est:"bien"},{id:"PC-10",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-11",est:"bien"},{id:"PC-12",est:"bien"},{id:"PC-13",est:"bien"},
+                        {id:"PC-14",est:"bien"},{id:"PC-15",est:"bien"},{id:"PC-16",est:"bien"},
+                        {id:"PC-17",est:"bien"},{id:"PC-18",est:"bien"},{id:"PC-19",est:"bien"},{id:"PC-20",est:"bien"}
+                    ]
+                }
+            },
+            // SHINKAWA: Fila1=PC-08,09,10,09 | Fila2=PC-01(vacio),02,03,04 y PC-05,06,07,08 | Fila3=PC-08,09,10,09 | Fila4=PC-05,06,07,08
+            "SHINKAWA": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-08",est:"bien"},{id:"PC-09",est:"bien"},{id:"PC-10",est:"bien"},{id:"PC-09b",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-01",est:"vacio"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"},
+                        {id:"PC-05",est:"bien"},{id:"PC-06",est:"bien"},{id:"PC-07",est:"bien"},{id:"PC-08b",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-08c",est:"bien"},{id:"PC-09c",est:"bien"},{id:"PC-10b",est:"bien"},{id:"PC-09d",est:"bien"}
+                    ],
+                    "Fila 4": [
+                        {id:"PC-05b",est:"bien"},{id:"PC-06b",est:"bien"},{id:"PC-07b",est:"bien"},{id:"PC-08d",est:"bien"}
+                    ]
+                }
+            },
+            // GILBERT: PC-PROFE | Fila1=PC-01..04 | Fila2=PC-02x4 | Fila3=PC-01..03 | Fila4=PC-01..04
+            "GILBERT": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-02a",est:"bien"},{id:"PC-02b",est:"bien"},{id:"PC-02c",est:"bien"},{id:"PC-02d",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-01b",est:"bien"},{id:"PC-02e",est:"bien"},{id:"PC-03b",est:"bien"}
+                    ],
+                    "Fila 4": [
+                        {id:"PC-01c",est:"bien"},{id:"PC-02f",est:"bien"},{id:"PC-03c",est:"bien"},{id:"PC-04b",est:"bien"}
+                    ]
+                }
+            },
+            // IMG4: PC-PROFE, Fila1=PC-01..06, Fila2=PC-07..12, Fila3=PC-13..18, Fila4=PC-019..024
+            "KOJIMA": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"bien"},{id:"PC-05",est:"bien"},{id:"PC-06",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-07",est:"bien"},{id:"PC-08",est:"bien"},{id:"PC-09",est:"bien"},
+                        {id:"PC-10",est:"bien"},{id:"PC-11",est:"bien"},{id:"PC-12",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-13",est:"bien"},{id:"PC-14",est:"bien"},{id:"PC-15",est:"bien"},
+                        {id:"PC-16",est:"bien"},{id:"PC-017",est:"bien"},{id:"PC-018",est:"bien"}
+                    ],
+                    "Fila 4": [
+                        {id:"PC-019",est:"bien"},{id:"PC-020",est:"bien"},{id:"PC-021",est:"bien"},
+                        {id:"PC-022",est:"bien"},{id:"PC-023",est:"bien"},{id:"PC-024",est:"bien"}
+                    ]
+                }
+            },
+            // IMG5: PC-PROFE, Fila1=PC-01..05, Fila2=PC-01..05, Fila3=PC-01..04 (sin num5), Fila_extra=PC-01..04
+            "HENNING": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"bien"},{id:"PC-05",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"bien"},{id:"PC-05",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 4": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ]
+                }
+            },
+            // IMG6: PC-PROFE, Fila1=PC-01..06, Fila2=PC-01..04, Fila3=PC-01..06, Fila4=PC-01..03, Fila5=PC-01..03
+            "CARMACK": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"bien"},{id:"PC-05",est:"bien"},{id:"PC-06",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"bien"},{id:"PC-05",est:"bien"},{id:"PC-06",est:"bien"}
+                    ],
+                    "Fila 4": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"}
+                    ],
+                    "Fila 5": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"}
+                    ]
+                }
+            },
+            // IMG7: PC-PROFE, Fila1=PC-01..06, Fila2=PC-07..12, Fila3=PC-13..18, Fila4=PC-019..024
+            "MIYAMOTO": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"bien"},{id:"PC-05",est:"bien"},{id:"PC-06",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-07",est:"bien"},{id:"PC-08",est:"bien"},{id:"PC-09",est:"bien"},
+                        {id:"PC-10",est:"bien"},{id:"PC-11",est:"bien"},{id:"PC-12",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-13",est:"bien"},{id:"PC-14",est:"bien"},{id:"PC-15",est:"bien"},
+                        {id:"PC-16",est:"bien"},{id:"PC-017",est:"bien"},{id:"PC-018",est:"bien"}
+                    ],
+                    "Fila 4": [
+                        {id:"PC-019",est:"bien"},{id:"PC-020",est:"bien"},{id:"PC-021",est:"bien"},
+                        {id:"PC-022",est:"bien"},{id:"PC-023",est:"bien"},{id:"PC-024",est:"bien"}
+                    ]
+                }
+            },
+            // IMG8: PC-PROFE, Fila1=PC-01..05(PC-04 vacio, PC-05 vacio), Fila2=PC-01..04, Fila3=PC-01..04, Fila6=PC-01..02
+            "ROMERO": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},
+                        {id:"PC-04",est:"vacio"},{id:"PC-05",est:"vacio"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 6": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"}
+                    ]
+                }
+            },
+            // IMG9: PC-PROFE, Fila1=PC-01..04, Fila2=PC-01..04, Fila3=PC-01..04, Fila4=PC-01..04, Fila5 vacía
+            "WILLIAMS": {
+                profesor: [{id:"PC-PROFE", est:"bien"}],
+                estudiantes: {
+                    "Fila 1": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 2": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 3": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 4": [
+                        {id:"PC-01",est:"bien"},{id:"PC-02",est:"bien"},{id:"PC-03",est:"bien"},{id:"PC-04",est:"bien"}
+                    ],
+                    "Fila 5": []
+                }
+            }
+        };
+
+        // ============================================================
+        // 🗄️ ESTADO LOCAL
+        // ============================================================
+        let baseDeDatos = JSON.parse(JSON.stringify(ESTRUCTURA_ORIGINAL));
+        let historialIncidencias = [];
+        let aulaActivaKey = "ESPORTS";
+        let técnicoTargetPuntero = null;
+
+        // ============================================================
+        // GUARDAR: localStorage SIEMPRE + Firebase si puede
+        // ============================================================
+        let _guardando = false;
+        function autoGuardado() {
+            localStorage.setItem('evad_aulas_db', JSON.stringify(baseDeDatos));
+            localStorage.setItem('evad_aulas_incidencias', JSON.stringify(historialIncidencias));
+            const payload = { aulas: baseDeDatos, incidencias: historialIncidencias };
+            _guardando = true; // pausar listener para no sobreescribir mientras guardamos
+            dbRef.set(payload)
+                .then(() => {
+                    statusEl.className = "conectado";
+                    statusEl.textContent = "En vivo - Firebase";
+                    setTimeout(() => { _guardando = false; }, 1000);
+                })
+                .catch(() => {
+                    statusEl.className = "error";
+                    statusEl.textContent = "Guardado solo en local (Firebase no disponible)";
+                    _guardando = false;
+                });
+        }
+
+        // ============================================================
+        // CARGAR AL INICIO: localStorage primero, luego Firebase
+        // ============================================================
+        const _localAulas = localStorage.getItem('evad_aulas_db');
+        const _localInc = localStorage.getItem('evad_aulas_incidencias');
+        if (_localAulas) {
+            try {
+                baseDeDatos = JSON.parse(_localAulas);
+                historialIncidencias = _localInc ? JSON.parse(_localInc) : [];
+            } catch(e) {}
+        }
+        dibujarDashboardAulas();
+        dibujarWorkspaceAula();
+
+        // Escucha cambios en tiempo real - cualquier cambio de otro usuario se refleja al instante
+        let _primeraVez = true;
+        dbRef.on("value", snapshot => {
+            if (_guardando) return; // ignorar si somos nosotros quien acaba de guardar
+            const data = snapshot.val();
+            if (data && data.aulas) {
+                baseDeDatos = data.aulas;
+                historialIncidencias = data.incidencias || [];
+                localStorage.setItem('evad_aulas_db', JSON.stringify(baseDeDatos));
+                localStorage.setItem('evad_aulas_incidencias', JSON.stringify(historialIncidencias));
+                statusEl.className = "conectado";
+                statusEl.textContent = "En vivo - Firebase";
+                dibujarDashboardAulas();
+                dibujarWorkspaceAula();
+            } else if (_primeraVez && !_localAulas) {
+                autoGuardado();
+                statusEl.className = "conectado";
+                statusEl.textContent = "Estructura inicial subida a Firebase";
+            } else if (_primeraVez) {
+                statusEl.className = "conectado";
+                statusEl.textContent = "Firebase vacio, usando datos locales";
+            }
+            _primeraVez = false;
+        }, () => {
+            statusEl.className = "error";
+            statusEl.textContent = _localAulas ? "Firebase no disponible - datos locales" : "Sin conexion";
+        });
+
+        // ============================================================
+        // 📊 DASHBOARD DE AULAS
+        // ============================================================
+        function dibujarDashboardAulas() {
+            const container = document.getElementById("dashboardAulas");
+            container.innerHTML = "";
+
+            Object.keys(baseDeDatos).forEach(aulaKey => {
+                const aula = baseDeDatos[aulaKey];
+
+                let totalPcs = 0, bien = 0, vacio = 0, revision = 0, mal = 0;
+
+                const procesarPc = (pc) => {
+                    totalPcs++;
+                    if(pc.est === "bien") bien++;
+                    if(pc.est === "vacio") vacio++;
+                    if(pc.est === "revision") revision++;
+                    if(pc.est === "mal") mal++;
+                };
+
+                if(aula.profesor) aula.profesor.forEach(procesarPc);
+                if(aula.estudiantes) {
+                    Object.keys(aula.estudiantes).forEach(f => aula.estudiantes[f].forEach(procesarPc));
+                }
+
+                const pcsActivos = totalPcs - vacio;
+                let saludPorcentaje = 100;
+                if(pcsActivos > 0) saludPorcentaje = Math.round((bien / pcsActivos) * 100);
+
+                let healthClass = "health-excelente";
+                if(saludPorcentaje < 90) healthClass = "health-advertencia";
+                if(saludPorcentaje < 70 || mal > 0) healthClass = "health-critica";
+
+                const card = document.createElement("div");
+                card.className = "aula-card-dashboard";
+                if(aulaKey === aulaActivaKey) card.style.borderColor = "var(--cyan-accent)";
+
+                card.onclick = () => {
+                    aulaActivaKey = aulaKey;
+                    dibujarDashboardAulas();
+                    dibujarWorkspaceAula();
+                    document.getElementById("tituloAulaActual").scrollIntoView({ behavior: 'smooth' });
+                };
+
+                card.innerHTML = `
+                    <div>
+                        <div class="aula-card-header">
+                            <h3>${aulaKey}</h3>
+                            <span class="aula-health-badge ${healthClass}">Salud: ${saludPorcentaje}%</span>
+                        </div>
+                        <div class="health-bar-container">
+                            <div class="health-bar-fill" style="width:${saludPorcentaje}%; background-color:${mal > 0 ? 'var(--status-mal)' : 'var(--status-bien)'}"></div>
+                        </div>
+                    </div>
+                    <div class="aula-card-stats">
+                        <div class="stat-item" style="color:var(--status-bien)"><span>${bien}</span>Bien</div>
+                        <div class="stat-item" style="color:var(--status-revision)"><span>${revision}</span>Revisión</div>
+                        <div class="stat-item" style="color:var(--status-mal)"><span>${mal}</span>Mal</div>
+                        <div class="stat-item" style="color:var(--status-vacio)"><span>${vacio}</span>Vacío</div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ============================================================
+        // 🖥️ WORKSPACE DEL AULA SELECCIONADA
+        // ============================================================
+        function dibujarWorkspaceAula() {
+            document.getElementById("tituloAulaActual").innerHTML = `Mapeo Técnico: <span>${aulaActivaKey}</span>`;
+
+            const gridProfe = document.getElementById("gridMesaProfe");
+            gridProfe.innerHTML = "";
+            const gridEstud = document.getElementById("gridFilasEstudiantes");
+            gridEstud.innerHTML = "";
+
+            const datosAula = baseDeDatos[aulaActivaKey];
+            if (!datosAula) return;
+
+            if(datosAula.profesor && datosAula.profesor.length > 0) {
+                document.getElementById("mesaProfeTarget").style.display = "flex";
+                datosAula.profesor.forEach((pc, idx) => gridProfe.appendChild(crearNodoPC(pc, "profesor", idx)));
+            } else {
+                document.getElementById("mesaProfeTarget").style.display = "none";
+            }
+
+            if(datosAula.estudiantes) {
+                Object.keys(datosAula.estudiantes).forEach(nombreFila => {
+                    const seccionFila = document.createElement("div");
+                    seccionFila.className = "fila-student-block";
+
+                    seccionFila.innerHTML = `
+                        <div class="fila-student-header">
+                            <div class="fila-student-label">${nombreFila}</div>
+                            <button class="btn-add-pc-inline" onclick="agregarPcAFila('${nombreFila}')">➕ Agregar PC</button>
+                        </div>
+                    `;
+
+                    const layoutPcs = document.createElement("div");
+                    layoutPcs.className = "pcs-flex-layout";
+                    datosAula.estudiantes[nombreFila].forEach((pc, idx) => {
+                        layoutPcs.appendChild(crearNodoPC(pc, "estudiantes", idx, nombreFila));
+                    });
+
+                    seccionFila.appendChild(layoutPcs);
+                    gridEstud.appendChild(seccionFila);
+                });
+            }
+
+            dibujarTablaHistorialTécnica();
+            autoGuardado(); // 🔥 Guarda en Firebase
+        }
+
+        // ============================================================
+        // 🖱️ NODO PC
+        // ============================================================
+        function crearNodoPC(pc, tipoPuesto, idx, nombreFila = "") {
+            const nodo = document.createElement("div");
+            nodo.className = `pc-node-box node-border-${pc.est}`;
+            nodo.innerHTML = `
+                <span class="pc-name-id">${pc.id}</span>
+                <span class="pc-monitor-icon">🖥️</span>
+                <span class="pc-state-pill">${pc.est}</span>
+            `;
+
+            const inc = historialIncidencias.find(i => i.aula === aulaActivaKey && i.pcId === pc.id && (i.gravedad === "Alta" || pc.est === "mal"));
+            if(inc) nodo.innerHTML += `<div class="node-critico-alarm">!</div>`;
+
+            nodo.onclick = () => abrirModalTécnico(pc, tipoPuesto, idx, nombreFila);
+            return nodo;
+        }
+
+        // ============================================================
+        // 🛠️ MODAL TÉCNICO
+        // ============================================================
+        function abrirModalTécnico(pc, tipoPuesto, idx, fila) {
+            técnicoTargetPuntero = { pc, tipoPuesto, idx, fila };
+            document.getElementById("técnicoModalTitle").innerText = `${aulaActivaKey} · ${pc.id}`;
+            document.getElementById("técnicoSelectEstado").value = pc.est;
+
+            const incEx = historialIncidencias.find(i => i.aula === aulaActivaKey && i.pcId === pc.id);
+            if(incEx) {
+                document.getElementById("técnicoSelectGravedad").value = incEx.gravedad;
+                document.getElementById("técnicoTxtNota").value = incEx.nota;
+            } else {
+                document.getElementById("técnicoSelectGravedad").value = "Ninguna";
+                document.getElementById("técnicoTxtNota").value = "";
+            }
+            document.getElementById("modaltécnico").classList.add("active");
+        }
+
+        function cerrarModalTécnico() {
+            document.getElementById("modaltécnico").classList.remove("active");
+            técnicoTargetPuntero = null;
+        }
+
+        document.getElementById("btnTécnicoGuardar").onclick = function() {
+            if(!técnicoTargetPuntero) return;
+            const { pc } = técnicoTargetPuntero;
+
+            const nEst = document.getElementById("técnicoSelectEstado").value;
+            const nGrav = document.getElementById("técnicoSelectGravedad").value;
+            const nNota = document.getElementById("técnicoTxtNota").value;
+
+            pc.est = nEst;
+            historialIncidencias = historialIncidencias.filter(i => !(i.aula === aulaActivaKey && i.pcId === pc.id));
+
+            if(nGrav !== "Ninguna" || nEst === "mal" || nEst === "revision") {
+                const fGrav = nGrav === "Ninguna" ? "Media" : nGrav;
+                const fNota = nNota || "Reportado desde mapa de aulas.";
+                historialIncidencias.push({ aula: aulaActivaKey, pcId: pc.id, gravedad: fGrav, nota: fNota });
+
+
+            }
+            cerrarModalTécnico();
+            dibujarDashboardAulas();
+            dibujarWorkspaceAula();
+        };
+
+        document.getElementById("btnTécnicoEliminar").onclick = function() {
+            if(!técnicoTargetPuntero) return;
+            const { pc, tipoPuesto, idx, fila } = técnicoTargetPuntero;
+
+            if(confirm(`¿ELIMINAR ${pc.id}?`)) {
+                if(tipoPuesto === "profesor") baseDeDatos[aulaActivaKey].profesor.splice(idx, 1);
+                else baseDeDatos[aulaActivaKey].estudiantes[fila].splice(idx, 1);
+
+                historialIncidencias = historialIncidencias.filter(i => !(i.aula === aulaActivaKey && i.pcId === pc.id));
+                cerrarModalTécnico();
+                dibujarDashboardAulas();
+                dibujarWorkspaceAula();
+            }
+        };
+
+        // ============================================================
+        // 📋 TABLA DE INCIDENCIAS
+        // ============================================================
+        function dibujarTablaHistorialTécnica() {
+            const tbody = document.getElementById("cuerpoTablaTécnica");
+            tbody.innerHTML = "";
+
+            if(historialIncidencias.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-gray); padding:20px;">Instalaciones funcionando al 100%.</td></tr>`;
+                return;
+            }
+
+            historialIncidencias.forEach((inc, index) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${inc.aula}</strong></td>
+                    <td><span style="color:#0052d4; font-weight:700;">${inc.pcId}</span></td>
+                    <td><span class="pill-grav grav-pill-${inc.gravedad}">${inc.gravedad}</span></td>
+                    <td>${inc.nota}</td>
+                    <td><button class="btn-technical-resolve" onclick="marcarComoResueltaYRestaurar(${index})">✅ Resolver</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.marcarComoResueltaYRestaurar = function(idx) {
+            const inc = historialIncidencias[idx];
+            if(baseDeDatos[inc.aula]) {
+                if(baseDeDatos[inc.aula].profesor) {
+                    baseDeDatos[inc.aula].profesor.forEach(pc => { if(pc.id === inc.pcId) pc.est = "bien"; });
+                }
+                if(baseDeDatos[inc.aula].estudiantes) {
+                    Object.keys(baseDeDatos[inc.aula].estudiantes).forEach(f => {
+                        baseDeDatos[inc.aula].estudiantes[f].forEach(pc => { if(pc.id === inc.pcId) pc.est = "bien"; });
+                    });
+                }
+            }
+            historialIncidencias.splice(idx, 1);
+            dibujarDashboardAulas();
+            dibujarWorkspaceAula();
+        };
+
+        window.agregarPcAFila = function(nombreFila) {
+            const filaArray = baseDeDatos[aulaActivaKey].estudiantes[nombreFila];
+            let maxNum = 0;
+            filaArray.forEach(pc => {
+                let matches = pc.id.match(/\d+/);
+                if(matches) {
+                    let num = parseInt(matches[0]);
+                    if(num > maxNum) maxNum = num;
+                }
+            });
+            let nextId = "PC-" + String(maxNum + 1).padStart(2, '0');
+            filaArray.push({ id: nextId, est: "bien" });
+            dibujarDashboardAulas();
+            dibujarWorkspaceAula();
+        };
+
+        window.confirmarRestablecimiento = function() {
+            if(confirm("¿Restablecer todo? Esto borrará los datos en Firebase también.")) {
+                baseDeDatos = JSON.parse(JSON.stringify(ESTRUCTURA_ORIGINAL));
+                historialIncidencias = [];
+                dibujarDashboardAulas();
+                dibujarWorkspaceAula();
+            }
+        };
+
+        // Fuerza guardar el estado ACTUAL en Firebase (sin borrar cambios)
+        window.forzarSubidaFirebase = function() {
+            autoGuardado();
+            alert("Datos guardados en Firebase y localStorage.");
+        };
+    </script>
+
+</body>
+</html>
